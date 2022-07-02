@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart' hide PickerItem;
 import 'package:flutter_picker/Picker.dart';
@@ -30,7 +31,7 @@ class _HomePageState extends State<HomePage> {
         .map((e) => PickerItem(
             text: Text(
               e.name,
-              style: Theme.of(context).textTheme.titleMedium,
+              style: Theme.of(context).textTheme.headline6,
             ),
             value: e))
         .toList();
@@ -66,27 +67,25 @@ class _HomePageState extends State<HomePage> {
             children: [
               ListTile(
                 onTap: () => _pickMode(context),
+                leading: const Text(
+                  'Mode:',
+                ),
                 title: Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
+                  mainAxisAlignment: MainAxisAlignment.end,
                   children: [
-                    const FaIcon(FontAwesomeIcons.codeCommit),
-                    const SizedBox(
-                      width: 6,
-                    ),
-                    Expanded(
-                      child: Text(
-                        'Mode',
-                        style: Theme.of(context).textTheme.titleLarge,
-                      ),
-                    ),
                     Text(Utils.getModeName(_currentConfig!.rgbMode)),
                   ],
                 ),
+                trailing: const FaIcon(FontAwesomeIcons.angleRight),
               ),
               Visibility(
                 visible: _currentConfig!.rgbMode == RgbMode.colorRange,
                 child: ListTile(
-                  title: SizedBox(
+                  leading: const Text('Start color:'),
+                  title: Container(
+                    padding: const EdgeInsets.only(
+                      top: 4,
+                    ),
                     height: 40,
                     child: ColorPickerSlider(
                       TrackType.hue,
@@ -103,11 +102,59 @@ class _HomePageState extends State<HomePage> {
                       },
                     ),
                   ),
-                  trailing: OutlinedButton(
-                    child: const Text('Pick color'),
-                    onPressed: () async {
-                      await ApiProxy.setConfig(_currentConfig!);
-                    },
+                ),
+              ),
+              Visibility(
+                visible: _currentConfig!.rgbMode == RgbMode.colorRange,
+                child: ListTile(
+                  leading: const Text('End color: '),
+                  title: Container(
+                    padding: const EdgeInsets.only(
+                      top: 4,
+                    ),
+                    height: 40,
+                    child: ColorPickerSlider(
+                      TrackType.hue,
+                      HSVColor.fromAHSV(
+                        1,
+                        _currentConfig!.colorRangeEnd > 360
+                            ? _currentConfig!.colorRangeEnd - 360
+                            : _currentConfig!.colorRangeEnd.toDouble(),
+                        0.5,
+                        0.5,
+                      ),
+                      (color) async {
+                        setState(() {
+                          _currentConfig!.colorRangeEnd =
+                              _currentConfig!.colorRangeStart >
+                                      _currentConfig!.colorRangeEnd
+                                  ? color.hue.toInt() + 360
+                                  : color.hue.toInt();
+                        });
+                      },
+                    ),
+                  ),
+                ),
+              ),
+              Visibility(
+                visible: _currentConfig!.rgbMode == RgbMode.colorRange,
+                child: Padding(
+                  padding: const EdgeInsets.only(
+                    bottom: 16,
+                    top: 8,
+                    left: 16,
+                    right: 16,
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      OutlinedButton(
+                        child: const Text('Pick colors'),
+                        onPressed: () async {
+                          await ApiProxy.setConfig(_currentConfig!);
+                        },
+                      ),
+                    ],
                   ),
                 ),
               ),
@@ -156,6 +203,10 @@ class _HomePageState extends State<HomePage> {
       backgroundColor: Theme.of(context).canvasColor,
       textStyle: Theme.of(context).textTheme.button,
       headerColor: Theme.of(context).canvasColor,
+      selectionOverlay: const CupertinoPickerDefaultSelectionOverlay(
+        capStartEdge: false,
+        capEndEdge: false,
+      ),
       headerDecoration: const BoxDecoration(),
       confirmTextStyle: Theme.of(context).textTheme.button!,
       selecteds: [RgbMode.values.indexOf(_currentConfig!.rgbMode)],
